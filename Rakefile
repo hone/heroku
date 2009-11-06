@@ -61,6 +61,7 @@ spec = Gem::Specification.new do |s|
 	s.add_dependency('launchy', '>=0.3.2')
 	s.add_dependency('json', '>= 1.1.0')
     s.add_dependency('ruby-git','>= 1.2.5')
+    s.add_dependency('wirble', '>= 0.1.3')
 end
 
 Rake::GemPackageTask.new(spec) do |p|

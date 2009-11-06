@@ -1,5 +1,6 @@
 require 'readline'
 require 'launchy'
+require 'wirble'
 
 module Heroku::Command
 	class App < Base
@@ -130,7 +131,7 @@ module Heroku::Command
 					unless cmd.nil? || cmd.strip.empty?
 						console_history_add(app, cmd)
 						break if cmd.downcase.strip == 'exit'
-						display console.run(cmd)
+						display Wirble::Colorize.colorize(console.run(cmd))
 					end
 				end
 			end
