@@ -127,6 +127,11 @@ module Heroku::Command
 				console_history_read(app)
 
 				display "Ruby console for #{app}.#{heroku.host}"
+                require 'irb'
+                require 'irb/completion'
+                IRB.setup(nil)
+                irb = IRB::Irb.new
+                IRB.conf[:MAIN_CONTEXT] = irb.context
 				while cmd = Readline.readline('>> ')
 					unless cmd.nil? || cmd.strip.empty?
 						console_history_add(app, cmd)
