@@ -127,11 +127,7 @@ module Heroku::Command
 				console_history_read(app)
 
 				display "Ruby console for #{app}.#{heroku.host}"
-                require 'irb'
-                require 'irb/completion'
-                IRB.setup(nil)
-                irb = IRB::Irb.new
-                IRB.conf[:MAIN_CONTEXT] = irb.context
+                setup_tab_complete
 				while cmd = Readline.readline('>> ')
 					unless cmd.nil? || cmd.strip.empty?
 						console_history_add(app, cmd)
@@ -218,5 +214,21 @@ module Heroku::Command
 				File.open(console_history_file(app), "a") { |f| f.puts cmd + "\n" }
 			end
 
+            private
+            def setup_tab_complete
+              require 'irb'
+              require 'irb/completion'
+              require 'console_environment'
+              binding =
+                if File.exist?('config.ru')
+                  Heroku::RackConsoleEnvironment.new.create_binding
+                else
+                  Heroku::RailsConsoleEnvironment.new.create_binding
+                end
+              IRB.setup(nil)
+              workspace = IRB::WorkSpace.new(binding)
+              irb = IRB::Irb.new(workspace)
+              IRB.conf[:MAIN_CONTEXT] = irb.context
+            end
 	end
 end
