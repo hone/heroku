@@ -32,14 +32,54 @@ module Heroku
 				Plugin.list.should include 'plugin2'
 			end
 
-			it "installs pulling from the plugin url" do
-				plugin_folder = "/tmp/heroku_plugin"
-				FileUtils.mkdir_p(plugin_folder)
-				`cd #{plugin_folder} && git init && echo 'test' > README && git add . && git commit -m 'my plugin'`
-				Plugin.new(plugin_folder).install
-				File.directory?("#{@sandbox}/heroku_plugin").should be_true
-				File.read("#{@sandbox}/heroku_plugin/README").should == "test\n"
-			end
+      describe "installing plugins" do
+        before(:each) do
+          @plugin_folder = "/tmp/heroku_plugin"
+          FileUtils.mkdir_p(@plugin_folder)
+          `cd #{@plugin_folder} && git init && echo 'test' > README && git add . && git commit -m 'my plugin'`
+        end
+
+        describe "passing in a git uri" do
+          before(:each) do
+            RestClient.stub!(:get).and_return('{"error":"No plugin of that name or id found."}')
+          end
+
+          it "installs pulling from the plugin url" do
+            Plugin.new(@plugin_folder).install
+            File.directory?("#{@sandbox}/heroku_plugin").should be_true
+            File.read("#{@sandbox}/heroku_plugin/README").should == "test\n"
+          end
+        end
+
+        describe "found a git uri" do
+          before(:each) do
+            RestClient.stub!(:get).and_return('{"plugin":{"name":"new_plugin","uri":"' + @plugin_folder + '","updated_at":"2010-01-17T07:12:50Z","id":1,"description":"A new plugin","created_at":"2010-01-17T07:12:50Z"}}')
+          end
+
+          it "installs pulling from herocutter" do
+            Plugin.new("new_plugin").install
+            File.directory?("#{@sandbox}/new_plugin").should be_true
+            File.read("#{@sandbox}/new_plugin/README").should == "test\n"
+          end
+        end
+
+        describe "error is raised" do
+          before(:each) do
+            RestClient.stub!(:get).and_raise(RestClient::RequestFailed)
+          end
+
+          it "should not install anything" do
+            Plugin.new("new_plugin").install
+            File.directory?("#{@sandbox}/new_plugin").should be_false
+          end
+
+          it "should install when passing in git url" do
+            Plugin.new(@plugin_folder).install
+            File.directory?("#{@sandbox}/heroku_plugin").should be_true
+            File.read("#{@sandbox}/heroku_plugin/README").should == "test\n"
+          end
+        end
+      end
 
 			it "uninstalls removing the folder" do
 				FileUtils.mkdir_p(@sandbox + '/plugin1')

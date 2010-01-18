@@ -1,7 +1,10 @@
+require 'rest_client'
 # based on the Rails Plugin
 
 module Heroku
 	class Plugin
+        HEROCUTTER_URL = "http://herocutter.heroku.com"
+
 		class << self
 			include Heroku::Helpers
 		end
@@ -43,7 +46,7 @@ module Heroku
 			FileUtils.mkdir_p(path)
 			Dir.chdir(path) do
 				system("git init > /dev/null 2>&1")
-				if !system("git pull --depth 1 #{uri}  > /dev/null 2>&1")
+				if !system("git pull --depth 1 #{fetch_git_uri(uri)}  > /dev/null 2>&1")
 					FileUtils.rm_rf path
 					return false
 				end
@@ -61,5 +64,21 @@ module Heroku
 				@name = File.basename(File.dirname(url)) if @name.empty?
 				@name.gsub!(/\.git$/, '') if @name =~ /\.git$/
 			end
+
+      # determine if they passed in a plugin name or uri
+      # return the uri if found on herocutter
+      def fetch_git_uri(name, herocutter_url = HEROCUTTER_URL)
+        begin
+          json = JSON.parse(RestClient.get("#{herocutter_url}/plugins/#{name}.json"))
+        rescue
+          return name
+        end
+
+        if json['error'].nil? and json['plugin']['uri']
+          json['plugin']['uri']
+        else
+          name
+        end
+      end
 	end
 end
