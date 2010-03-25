@@ -49,6 +49,33 @@ module Heroku
           File.directory?("#{@sandbox}/heroku_plugin").should be_true
           File.read("#{@sandbox}/heroku_plugin/README").should == "test\n"
         end
+
+        describe "and updating a plugin" do
+          before(:each) do
+            File.open(@plugin_folder + '/new_file', 'w') { |f| f.write "test2" }
+            `cd #{@plugin_folder} && git add . && git commit -m 'new file'`
+          end
+
+          it "should contain the updated file" do
+            @plugin.update
+
+            File.read("#{@sandbox}/heroku_plugin/new_file").should == "test2"
+          end
+
+          it "should return true if successful" do
+            @plugin.update.should be_true
+          end
+
+          describe "and it isn't successful" do
+            before(:each) do
+              FileUtils.rm_rf("#{@sandbox}/heroku_plugin/.git")
+            end
+
+            it "should return false" do
+              @plugin.update.should be_false
+            end
+          end
+        end
       end
 
       it "uninstalls removing the folder" do

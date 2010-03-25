@@ -56,6 +56,16 @@ module Heroku
       FileUtils.rm_r path if File.directory?(path)
     end
 
+    def update
+      Dir.chdir(path) do
+        if !system("git pull > /dev/null 2>&1")
+          return false
+        end
+
+        true
+      end
+    end
+
     private 
       def guess_name(url)
         @name = File.basename(url)
