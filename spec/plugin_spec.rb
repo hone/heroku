@@ -32,13 +32,23 @@ module Heroku
         Plugin.list.should include 'plugin2'
       end
 
-      it "installs pulling from the plugin url" do
-        plugin_folder = "/tmp/heroku_plugin"
-        FileUtils.mkdir_p(plugin_folder)
-        `cd #{plugin_folder} && git init && echo 'test' > README && git add . && git commit -m 'my plugin'`
-        Plugin.new(plugin_folder).install
-        File.directory?("#{@sandbox}/heroku_plugin").should be_true
-        File.read("#{@sandbox}/heroku_plugin/README").should == "test\n"
+      describe "when plugin is installed" do
+        before(:each) do
+          @plugin_folder = "/tmp/heroku_plugin"
+          FileUtils.mkdir_p(@plugin_folder)
+          `cd #{@plugin_folder} && git init && echo 'test' > README && git add . && git commit -m 'my plugin'`
+          @plugin = Plugin.new(@plugin_folder)
+          @plugin.install
+        end
+
+        after(:each) do
+          FileUtils.rm_rf(@plugin_folder)
+        end
+
+        it "should pull from the plugin url" do
+          File.directory?("#{@sandbox}/heroku_plugin").should be_true
+          File.read("#{@sandbox}/heroku_plugin/README").should == "test\n"
+        end
       end
 
       it "uninstalls removing the folder" do
