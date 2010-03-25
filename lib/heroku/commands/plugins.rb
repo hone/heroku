@@ -21,5 +21,22 @@ module Heroku::Command
       plugin.uninstall
       display "#{plugin} uninstalled"
     end
+
+    def update
+      ::Heroku::Plugin.list.each do |plugin_path|
+        md = /URL: (.+)$/.match(`cd #{plugin_path} && git remote show origin -n | grep URL`)
+
+        if md[1] != "origin" # means there isn't an origin
+          plugin = Heroku::Plugin.new(md[1])
+          if plugin.update
+            display "Successfully updated: #{plugin.name}"
+          else
+            display "Could not update: #{plugin.name}"
+          end
+        else
+          display "Please reinstall, no remote for #{plugin_path}"
+        end
+      end
+    end
   end
 end
